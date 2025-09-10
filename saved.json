@@ -1,0 +1,13 @@
+{
+    "metadata" : {
+        "timestamp" : "2024-06-19T12:34:56.789Z",
+        "serializer_class" : "LocalDataJsonFormatSerializer"
+    },
+    "data" : {
+        "ax" : 0.432,
+        "ay" : 0.123,
+        "az" : 0.987,
+        "v" : 1.234,
+        "koraci": 123
+    }
+}
