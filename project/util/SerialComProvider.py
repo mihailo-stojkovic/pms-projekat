@@ -15,9 +15,13 @@ class SerialComProvider:
     __com = None
     
     def __init__(self, port: str | None = None, baudrate: int = 9600):
+        from dotenv import load_dotenv
+        import os        
         
-        self.port = port
-        self.baudrate = baudrate
+        load_dotenv()
+        
+        self.port = port or os.getenv("PORT", "COM3")
+        self.baudrate = baudrate or int(os.getenv("BAUDRATE", "9600"))
     
     
     def __open_connection(self):
@@ -32,14 +36,38 @@ class SerialComProvider:
     
     
     
-    @classmethod
-    def initialize(cls, port: str | None = None, baudrate : int = 9600):
-        if not cls.__instance:
-            with cls.__class_lock:
-                if not cls.__instance:
-                    cls.__instance = SerialComProvider(port, baudrate)
-                    cls.__instance.__open_connection()
-        return cls.__instance
+    def __read_line(self) -> str | None:
+        if self.__com and self.__com.is_open:
+            try:
+                line = self.__com.readline().decode('utf-8').strip()
+                return line
+            except Exception as e:
+                print(f"Error reading from serial port: {e}")
+                return None
+        else:
+            print("Serial port is not open.")
+            return None
+    
+    
+    def __parse_line(self, line: str) -> dict | None:
+        from util.InstructionParser import InstructionParser
+        try:
+            parsed = InstructionParser.parse_instruction(line)
+            return parsed
+        except ValueError as e:
+            print(f"Error parsing line: {e}")
+            return None
+    
+    
+    
+    @staticmethod
+    def initialize(port: str | None = None, baudrate : int = 9600):
+        if not SerialComProvider.__instance:
+            with SerialComProvider.__class_lock:
+                if not SerialComProvider.__instance:
+                    SerialComProvider.__instance = SerialComProvider(port, baudrate)
+                    SerialComProvider.__instance.__open_connection()
+        return SerialComProvider.__instance
     
     
     @staticmethod
