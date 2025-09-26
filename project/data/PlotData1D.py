@@ -18,7 +18,12 @@ class PlotData1D:
             self.labels = labels
             
     def add_data(self, data, label=None):
-        self.data.append(data)
+        
+        for i in range(len(data)):
+            if i < len(self.data):
+                self.data[i].extend(data[i])
+            else:
+                self.data.append(data[i])
         
         if label is not None:
             self.labels.append(label)
