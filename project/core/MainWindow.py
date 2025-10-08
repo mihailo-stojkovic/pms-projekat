@@ -41,18 +41,15 @@ class MainWindow(QMainWindow):
         """
         Akcija koja se izvršava kada se pritisne dugme "Start"
         """
-        
-        
-        print("Start button clicked")
+        # Prelazak iz idle u measurement
         
     def get_threshold(self):
         return float(self.ui.lineEditPrag.text())
     
     def stop_action(self):
+        #Stop treba da prebaci iz measurement u idle
         
-        print("Stop button clicked")
-        if MainWindow.state: 
-            MainWindow.state.cleanup()
+        pass
             
         self.ui.plotWidget.clear()
         
@@ -87,4 +84,6 @@ class MainWindow(QMainWindow):
         
     def connect_manager(self, manager):
         self.state = manager
-        
+    
+    def closeEvent(self, event):
+        self.state.cleanup()

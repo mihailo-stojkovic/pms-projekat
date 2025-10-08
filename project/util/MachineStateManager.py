@@ -38,7 +38,7 @@ class MachineStateManager:
             import time
             meanx, meany, meanz, stdx, stdy, stdz = 0, 0, 0, 0, 0, 0
             while True:
-                line = ""
+                line = None
                 with cls.__instance.__aquisition_lock:
                     line = cls.__instance.__serial_provider.read_line()
                 
