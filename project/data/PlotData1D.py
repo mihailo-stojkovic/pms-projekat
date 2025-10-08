@@ -8,7 +8,9 @@ class PlotData1D:
         if data is not None:
             for data_array in data:
                 self.data.append(data_array)
-            
+        
+        print(f"Number of array in newly created PlotData1D: {len(data)}")
+        
         self.title = title
         self.x_label = x_label
         self.y_label = y_label

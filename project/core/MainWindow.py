@@ -1,7 +1,11 @@
+from data.PlotData1D import PlotData1D
 from PySide6.QtWidgets import QMainWindow
 from ui.UI_Window import Ui_MainWindow
-
 class MainWindow(QMainWindow):
+    # add qt thread to handle getting data from the arduino
+    
+    state = None
+    
     def __init__(self):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
@@ -10,26 +14,77 @@ class MainWindow(QMainWindow):
         # Button actions
         self.ui.buttonStart.clicked.connect(self.start_action)
         self.ui.buttonStop.clicked.connect(self.stop_action)
-        #self.ui.buttonPragPrimeni.clicked.connect(self.apply_threshold)
-        #self.ui.buttonMinPrimeni.clicked.connect(self.apply_min_speed)
+        self.ui.buttonPragPrimeni.clicked.connect(self.apply_threshold)
+        self.ui.buttonMinPrimeni.clicked.connect(self.apply_min_speed)
         
         
-    def update_plot(self, data):
+        
+        
+    def update_plot(self, data, plot_type: str = "line"):
+        self.ui.plotWidget.set_plot_type(plot_type)
         self.ui.plotWidget.plot(data)
+        
+        
+    def set_acceleration_labels(self, ax, ay, az):
+        self.ui.lcdNumberAx.display(ax)
+        self.ui.lcdNumberAy.display(ay)
+        self.ui.lcdNumberAz.display(az)
+        
+        
+    def set_current_speed(self, speed):
+        self.ui.lcdNumberBrzina.display(speed)
+
+    def set_number_of_steps(self, steps):
+        self.ui.lcdNumberBrojKoraka.display(steps)
 
     def start_action(self):
         """
         Akcija koja se izvršava kada se pritisne dugme "Start"
         """
-        print("Start button clicked")
-        import numpy as np
-        from data.PlotData1D import PlotData1D
-        x = np.sin(np.linspace(0, 10, 1000)) + np.random.normal(0, 0.5, 1000)
-        y = np.cos(np.linspace(0, 10, 1000)) + np.random.normal(0, 0.5, 1000)
-        plotData = PlotData1D(data=[x, y], title="Naslov", x_label="X osa", y_label="Y osa", labels=["sin(x)", "cos(x)"])
-        self.update_plot(plotData)
-        self.ui.lcdNumberBrzina.display(self.ui.lcdNumberBrzina.value()+1)
         
+        
+        print("Start button clicked")
+        
+    def get_threshold(self):
+        return float(self.ui.lineEditPrag.text())
+    
     def stop_action(self):
+        
         print("Stop button clicked")
+        if MainWindow.state: 
+            MainWindow.state.cleanup()
+            
         self.ui.plotWidget.clear()
+        
+    def apply_threshold(self, value : float = None):
+        try:
+            _value = value
+            if value is None:
+                _value = float(self.ui.lineEditPrag.text())
+            else:
+                self.ui.lineEditPrag.setText(str(value))
+            threshold_value = _value
+            if MainWindow.state:
+                MainWindow.state.set_threshold(threshold_value)
+            print(f"Threshold applied: {threshold_value}")
+        except:
+            pass
+        
+    def apply_min_speed(self, value : float =None):
+        try:
+            _value = value
+            if value is None:
+                _value = float(self.ui.lineEditMin.text())
+            else:
+                self.ui.lineEditMin.setText(str(value))
+            min_speed_value = _value
+            if MainWindow.state:
+                MainWindow.state.set_min_speed(min_speed_value)
+            print(f"Minimum speed applied: {min_speed_value}")
+    
+        except:
+            pass
+        
+    def connect_manager(self, manager):
+        self.state = manager
+        

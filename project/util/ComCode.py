@@ -1,8 +1,10 @@
-from enum import Enum
+from enum import IntEnum
 
-class RecComCode(Enum):
-    DATA = 0x01
-    CAPAPCITIVE_TOUCH = 0x02
-    
-class SendComCode(Enum):
-    pass    
+class RecComCode(IntEnum):
+    DATA = 1    #Standardni podaci ax, ay, az, touched
+    REC_CAL = 2  #Podaci za kalibraciju
+
+class SendComCode(IntEnum):
+    STD = 0x01
+    CAL = 0x02
+    STEP = 0x03

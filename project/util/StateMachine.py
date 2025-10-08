@@ -61,4 +61,5 @@ class StateMachine:
             raise Exception("StateMachine not initialized. Call 'initialize' first.")
         if not isinstance(new_state, State):
             raise ValueError("new_state must be an instance of MachineStates Enum.")
+        print(f"StateMachine: Changing state from {cls.__instance.__state} to {new_state}")
         cls.__instance.__state = new_state
