@@ -13,6 +13,8 @@
 volatile bool sendTick = false;  // Timer1 flag
 volatile bool touched = false;
 volatile int steps = 0;          // step count updated from PC
+volatile float minSpeed = 0;
+volatile long startTime;
 
 TM1637Display display(CLK, DIO);
 String serialBuffer = "";         // accumulate incoming serial data
@@ -61,16 +63,35 @@ void loop() {
     Serial.print(" ");
     Serial.println((int)touched);
 
+
     touched = false;
   }
 
   // --- Handle incoming serial data ---
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == '\n' || c == '\r') {
+    if (c == '\n' || c == '\r') {      
       // End of command — parse step count
       int newSteps = serialBuffer.toInt();
+      if(newSteps < 0) {
+        //poslata minimalna brzina
+        minSpeed = newSteps / (-3000.0);
+        serialBuffer = ""; // reset buffer
+        startTime = millis();
+        continue;
+      }
+      
+      long endTime = millis();
+      float timeElapsed = (endTime - startTime) / (6000.0);
+      if((newSteps - steps) / timeElapsed < minSpeed) {
+        
+        digitalWrite(TEST_PIN, HIGH);
+      }
+      else {
+        digitalWrite(TEST_PIN, LOW);
+      }
       steps = newSteps;
+      startTime = endTime;
       serialBuffer = ""; // reset buffer
     } else {
       serialBuffer += c; // accumulate digits

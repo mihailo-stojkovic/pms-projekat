@@ -19,6 +19,8 @@ class MachineStateManager:
     __plotter_thread = None
     DETECTION_DELAY = 3  # seconds
     __start_calibration_time = None
+    
+    __start_measurement_time = None
     __acceleration_threshold = None
     __steps = 0
     
@@ -89,9 +91,20 @@ class MachineStateManager:
                             
                             print("[WRK-THR] Calibration complete. Switching to IDLE state.")
                     if cls.__instance.__state_machine.get_state() == MachineStates.MEASUREMENT:
+                        print("New measurement")
                         new_steps = cls.__instance.__data_manager.count_step(cls.__instance.__acceleration_threshold)
+                        endTime = tt()
+                        speed = new_steps / (endTime - cls.__instance.__start_measurement_time)*6000
+                        cls.__instance.__start_measurement_time = endTime
+                        print(f"new steps {new_steps} counted")
                         cls.__instance.__steps += new_steps
+                        
+                        print("preparing to send number of steps")
                         cls.__instance.__serial_provider.send_command(cls.__instance.__steps)
+                        
+                        cls.__instance.__main_window.set_acceleration_labels(ax, ay, az)
+                        cls.__instance.__main_window.set_number_of_steps(cls.__instance.__steps)
+                        cls.__instance.__main_window.set_current_speed(speed)
                         # odradi azuriranje koraka i ovde
                         # ipak ne, to moze u plotter thread   
                         
@@ -115,8 +128,10 @@ class MachineStateManager:
                     SerialComProvider.cleanup()
                     DataManager.cleanup()
                     cls.__instance.__stop_event.set()
-                    cls.__instance.__worker_thread.join()
-                    cls.__instance.__plotter_thread.join()       
+                    if cls.__instance.__worker_thread is not None:
+                        cls.__instance.__worker_thread.join()
+                    if cls.__instance.__plotter_thread is not None:
+                        cls.__instance.__plotter_thread.join()       
                     cls.__instance = None
                     
     @classmethod
@@ -145,20 +160,7 @@ class MachineStateManager:
         
     @classmethod
     def handle_event(cls, event: str):
-        def run_plotter():
-            print("Starting plotter thread.")
-            import time
-            try:
-                while not cls.__instance.__stop_event.is_set():
-                    with cls.__instance.__plotter_lock:
-                        cls.__instance.__data_manager.plot_line_data()
-                        (last_ax, last_ay, last_az) = cls.__instance.__data_manager.get_latest_data()
-                        cls.__instance.__main_window.set_acceleration_labels(last_ax, last_ay, last_az)
-                        cls.__instance.__main_window.set_number_of_steps(cls.__instance.__steps)
-                    time.sleep(0.1)  # Sleep for a while before next update
-            
-            except:
-                print("Exiting plotter thread.")
+        
         
         if cls.__instance:
             match event:
@@ -168,10 +170,11 @@ class MachineStateManager:
                 case 'start_measurement':
                     if cls.__instance.__state_machine.get_state() == MachineStates.IDLE and cls.__instance.__data_manager.calibrated():
                         print("[WRK-THR] Starting measurement...")
+                        cls.__acceleration_threshold = cls.__instance.__main_window.get_threshold()
+                        cls.__start_measurement_time = tt()
                         cls.__instance.__state_machine.set_state(MachineStates.MEASUREMENT)
                         cls.__instance.__data_manager.clear_data()
-                        cls.__instance.__plotter_thread = threading.Thread(target=run_plotter, daemon=True)
-                        cls.__instance.__plotter_thread.start()
+                        
                 case 'peak_measurement':
                     if cls.__instance.__state_machine.get_state() == MachineStates.IDLE:
                         cls.__instance.__state_machine.set_state(MachineStates.PEAK_DETECTION)

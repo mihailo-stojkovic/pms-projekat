@@ -37,12 +37,15 @@ class PlotCanvas(pg.GraphicsLayoutWidget):
         self.overlay = overlay
 
     def plot(self, data: PlotData1D):
+        print("Sending plot signal")
         self._plot_signal.trigger.emit(data)
 
     @Slot(object)
     def _do_plot(self, data: PlotData1D):
         # Update global min/max only for line plots, safely skipping empty curves
+        print("Attempting do_plot")
         if self.plot_type == "line":
+            print("Attempting line plot")
             non_empty_curves = [np.array(curve) for curve in data.data if len(curve) > 0]
             if non_empty_curves:
                 data_min = min(curve.min() for curve in non_empty_curves)

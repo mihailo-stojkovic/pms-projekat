@@ -136,6 +136,7 @@ class DataManager:
             data=[ax, ay, az],
             labels=labels
         )
+        print("Packaging plotdata")
         return plotData
 
     
@@ -158,6 +159,7 @@ class DataManager:
     @classmethod
     def plot_line_data(cls, func_type : str = 'value'):
         if cls.__instance:
+            print("Attempting to plot from DataManager")
             cls.__instance.__plot_function(
                 cls.__instance.to_plotdata(func_type=func_type),
                 'line'
@@ -190,6 +192,8 @@ class DataManager:
     @classmethod
     def get_latest_data(cls):
         if cls.__instance:
+            if len(cls.__instance.get_data('ax')) == 0:
+                return (0,0,0)
             return (cls.__instance.get_data('ax')[-1],
                     cls.__instance.get_data('ay')[-1],
                     cls.__instance.get_data('az')[-1],)
@@ -199,15 +203,23 @@ class DataManager:
         
     @classmethod
     def count_step(cls, threshold : int = 0):
+        print("Counting number of steps")
         is_step = lambda x: x[0] > x[1]
         if cls.__instance:
-            with cls.__instance.__data_lock:
-                ax = np.where(ax[-2:-1]>threshold, 1024 - cls.__instance.__calibration_values['ax'], 0)
-                ay = np.where(ay[-2:-1]>threshold, 1024 - cls.__instance.__calibration_values['ay'], 0)
-                az = np.where(az[-2:-1]>threshold, 1024 - cls.__instance.__calibration_values['az'], 0)    
+            (ax, ay, az) = (np.array(cls.__instance.get_data('ax')),
+                    np.array(cls.__instance.get_data('ay')),
+                    np.array(cls.__instance.get_data('az')))
+            if len(ax) < 2:
+                return 0        
+            ax = np.array(ax[-2:])
+            ay = np.array(ay[-2:])
+            az = np.array(az[-2:])
+            ax = np.where(ax > threshold, 1024 - cls.__instance.__calibration_values['ax'], 0)
+            ay = np.where(ay > threshold, 1024 - cls.__instance.__calibration_values['ay'], 0)
+            az = np.where(az > threshold, 1024 - cls.__instance.__calibration_values['az'], 0)    
 
-                count = 0
-                count += 1 if is_step(ax) == True else 0
-                count += 1 if is_step(ay) == True else 0
-                count += 1 if is_step(az) == True else 0
-                return count
+            count = 0
+            count += 1 if is_step(ax) == True else 0
+            count += 1 if is_step(ay) == True else 0
+            count += 1 if is_step(az) == True else 0
+            return count

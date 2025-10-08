@@ -41,6 +41,7 @@ class MainWindow(QMainWindow):
         """
         Akcija koja se izvršava kada se pritisne dugme "Start"
         """
+        self.state.handle_event("start_measurement")
         # Prelazak iz idle u measurement
         
     def get_threshold(self):
