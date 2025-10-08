@@ -22,6 +22,8 @@ class MachineStateManager:
     __acceleration_threshold = None
     __steps = 0
     
+    __stop_event = threading.Event()
+    
     def __init__(self, mainWindow : MainWindow = None):
         def __plot_wrapper(data, type):
             mainWindow.update_plot(data, type)
@@ -37,7 +39,7 @@ class MachineStateManager:
             print("Initializing MachineStateManager worker thread.")
             import time
             meanx, meany, meanz, stdx, stdy, stdz = 0, 0, 0, 0, 0, 0
-            while True:
+            while not cls.__instance.__stop_event.is_set():
                 line = None
                 with cls.__instance.__aquisition_lock:
                     line = cls.__instance.__serial_provider.read_line()
@@ -112,6 +114,9 @@ class MachineStateManager:
                     #cleanup entrypoint
                     SerialComProvider.cleanup()
                     DataManager.cleanup()
+                    cls.__instance.__stop_event.set()
+                    cls.__instance.__worker_thread.join()
+                    cls.__instance.__plotter_thread.join()       
                     cls.__instance = None
                     
     @classmethod
@@ -144,7 +149,7 @@ class MachineStateManager:
             print("Starting plotter thread.")
             import time
             try:
-                while True:
+                while not cls.__instance.__stop_event.is_set():
                     with cls.__instance.__plotter_lock:
                         cls.__instance.__data_manager.plot_line_data()
                         (last_ax, last_ay, last_az) = cls.__instance.__data_manager.get_latest_data()
