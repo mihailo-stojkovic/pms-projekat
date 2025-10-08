@@ -47,6 +47,9 @@ class MainWindow(QMainWindow):
     def get_threshold(self):
         return float(self.ui.lineEditPrag.text())
     
+    def get_minimal_speed(self):
+        return float(self.ui.lineEditMin.text())
+    
     def stop_action(self):
         #Stop treba da prebaci iz measurement u idle
         

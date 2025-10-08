@@ -23,6 +23,7 @@ class MachineStateManager:
     __start_measurement_time = None
     __acceleration_threshold = None
     __steps = 0
+    __last_steps = 0
     
     __stop_event = threading.Event()
     
@@ -94,17 +95,22 @@ class MachineStateManager:
                         print("New measurement")
                         new_steps = cls.__instance.__data_manager.count_step(cls.__instance.__acceleration_threshold)
                         endTime = tt()
-                        speed = new_steps / (endTime - cls.__instance.__start_measurement_time)*6000
-                        cls.__instance.__start_measurement_time = endTime
-                        print(f"new steps {new_steps} counted")
                         cls.__instance.__steps += new_steps
+                                              
+                        if endTime - cls.__instance.__start_measurement_time > 2:
+                            speed = (cls.__instance.__steps - cls.__instance.__last_steps) / (endTime - cls.__instance.__start_measurement_time)*60
+                            cls.__instance.__start_measurement_time = endTime
+                            cls.__instance.__last_steps = cls.__instance.__steps
+                            cls.__instance.__main_window.set_current_speed(speed)
+                        
+                        
+                        print(f"new steps {new_steps} counted")
                         
                         print("preparing to send number of steps")
                         cls.__instance.__serial_provider.send_command(cls.__instance.__steps)
                         
                         cls.__instance.__main_window.set_acceleration_labels(ax, ay, az)
                         cls.__instance.__main_window.set_number_of_steps(cls.__instance.__steps)
-                        cls.__instance.__main_window.set_current_speed(speed)
                         # odradi azuriranje koraka i ovde
                         # ipak ne, to moze u plotter thread   
                         
@@ -171,6 +177,9 @@ class MachineStateManager:
                     if cls.__instance.__state_machine.get_state() == MachineStates.IDLE and cls.__instance.__data_manager.calibrated():
                         print("[WRK-THR] Starting measurement...")
                         cls.__acceleration_threshold = cls.__instance.__main_window.get_threshold()
+                        minimal_speed = cls.__instance.__main_window.get_minimal_speed()
+                        minimal_speed *= -3000
+                        cls.__instance.__serial_provider.send_command(int(minimal_speed))
                         cls.__start_measurement_time = tt()
                         cls.__instance.__state_machine.set_state(MachineStates.MEASUREMENT)
                         cls.__instance.__data_manager.clear_data()
