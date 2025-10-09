@@ -10,7 +10,7 @@ class SerializedDataPackage(ABC):
     """
     def __init__(self, content: dict, serializer_class: type):
         self.serializer_class = serializer_class
-        self._content = content
+        self.content = content
         if not 'metadata' in self.content:
             self.content['metadata'] = {
                 'serializer_class': serializer_class.__name__
@@ -65,8 +65,8 @@ class SerializedLocalJsonDataPackage(SerializedDataPackage):
     Klasa koja predstavlja konkretan paket podataka koji se može serijalizovati koristeći LocalDataJsonFormatSerializer.
     """
     def __init__(self, data: dict):
-        super().__init__(LocalDataJsonFormatSerializer)
-        self._content = data
+        super().__init__(data, type(LocalDataJsonFormatSerializer))
+        self.content = data
         
     def is_valid(self) -> bool:
         if not isinstance(self._content, dict):

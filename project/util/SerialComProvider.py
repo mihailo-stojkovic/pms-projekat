@@ -88,11 +88,9 @@ class SerialComProvider:
     @staticmethod
     def send_command(command : int):
         if SerialComProvider.__instance and SerialComProvider.__instance.__com and SerialComProvider.__instance.__com.is_open:
-            print(f"Sending: {command}")
             try:
                 SerialComProvider.__instance.__com.write((str(command) + '\n').encode('utf-8'))
                 SerialComProvider.__instance.__reset_wait()
-                print(f"Sent command: {command}")
             except Exception as e:
                 print(f"Error sending command: {e}")
                 SerialComProvider.__instance.__wait()

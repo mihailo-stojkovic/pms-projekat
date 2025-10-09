@@ -92,7 +92,7 @@ class MachineStateManager:
                             
                             print("[WRK-THR] Calibration complete. Switching to IDLE state.")
                     if cls.__instance.__state_machine.get_state() == MachineStates.MEASUREMENT:
-                        print("New measurement")
+                        
                         new_steps = cls.__instance.__data_manager.count_step(cls.__instance.__acceleration_threshold)
                         endTime = tt()
                         cls.__instance.__steps += new_steps
@@ -104,15 +104,12 @@ class MachineStateManager:
                             cls.__instance.__main_window.set_current_speed(speed)
                         
                         
-                        print(f"new steps {new_steps} counted")
                         
-                        print("preparing to send number of steps")
                         cls.__instance.__serial_provider.send_command(cls.__instance.__steps)
                         
                         cls.__instance.__main_window.set_acceleration_labels(ax, ay, az)
                         cls.__instance.__main_window.set_number_of_steps(cls.__instance.__steps)
-                        # odradi azuriranje koraka i ovde
-                        # ipak ne, to moze u plotter thread   
+                         
                         
                 time.sleep(0.01)
             

@@ -1,5 +1,6 @@
 from data.PlotData1D import PlotData1D
 from PySide6.QtWidgets import QMainWindow
+from PySide6.QtGui import QAction
 from ui.UI_Window import Ui_MainWindow
 class MainWindow(QMainWindow):
     # add qt thread to handle getting data from the arduino
@@ -17,6 +18,7 @@ class MainWindow(QMainWindow):
         self.ui.buttonPragPrimeni.clicked.connect(self.apply_threshold)
         self.ui.buttonMinPrimeni.clicked.connect(self.apply_min_speed)
         
+        self.addMenuBar()
         
         
         
@@ -29,13 +31,23 @@ class MainWindow(QMainWindow):
         self.ui.lcdNumberAx.display(ax)
         self.ui.lcdNumberAy.display(ay)
         self.ui.lcdNumberAz.display(az)
-        
+    
+    def get_acceleration_labels(self):
+        return (
+            float(self.ui.lcdNumberAx.value()),
+            float(self.ui.lcdNumberAy.value()),
+            float(self.ui.lcdNumberAz.value()),
+        )
         
     def set_current_speed(self, speed):
         self.ui.lcdNumberBrzina.display(speed)
 
     def set_number_of_steps(self, steps):
         self.ui.lcdNumberBrojKoraka.display(steps)
+
+    def get_number_of_steps(self):
+        return float(self.ui.lcdNumberBrojKoraka.value())
+
 
     def start_action(self):
         """
@@ -91,3 +103,35 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         self.state.cleanup()
+    
+    def save(self):
+        from data.DataSerializer import LocalDataJsonFormatSerializer as serializer, SerializedLocalJsonDataPackage as package
+        
+        (ax, ay, az) = self.get_acceleration_labels()
+        v = self.get_minimal_speed()
+        koraci = self.get_number_of_steps()
+        
+        data_to_save = {
+            'data' : {
+                'ax' : ax,
+                'ay' : ay,
+                'az' : az,
+                'v' : v,
+                'koraci' : koraci
+            }
+        }
+        serializer.serialize(package(data_to_save), 'save.json')
+        
+
+    
+        
+    def addMenuBar(self):
+        menuBar = self.menuBar()
+        fileMenu = menuBar.addMenu("&File")
+        
+        saveAction = QAction("&Save", self)
+        saveAction.setShortcut("Ctrl+S")
+        saveAction.triggered.connect(self.save)
+        
+        fileMenu.addAction(saveAction)
+    
